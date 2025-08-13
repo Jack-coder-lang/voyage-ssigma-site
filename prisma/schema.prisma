@@ -1,0 +1,89 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("MONGODB_URI")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String    @id @default(auto()) @map("_id")
+  email         String    @unique
+  name          String
+  role          String
+  loyaltyPoints Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations inverses
+  bookings           Booking[]
+  reviews            Review[]
+  loyaltyTransactions LoyaltyTransaction[]
+}
+
+model Destination {
+  id          String    @id @default(auto()) @map("_id")
+  name        String
+  country     String
+  region      String
+  description String
+  price       Float
+  currency    String
+  rating      Float
+  isPopular   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations inverses
+  bookings Booking[]
+  reviews  Review[]
+}
+
+model Booking {
+  id            String    @id @default(auto()) @map("_id")
+  userId        String
+  destinationId String
+  status        String    @default("pending") // Ex: pending, confirmed, cancelled
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  destination Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id            String    @id @default(auto()) @map("_id")
+  userId        String
+  destinationId String
+  rating        Float     @default(0) @gte(0) @lte(5)
+  comment       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  destination Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+}
+
+model LoyaltyTransaction {
+  id         String    @id @default(auto()) @map("_id")
+  userId     String
+  points     Int       @default(0)
+  type       String    @default("earn") // Ex: earn, redeem
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Setting {
+  id               String    @id @default(auto()) @map("_id")
+  siteName         String
+  currency         String
+  language         String
+  timezone         String
+  emailNotifications Boolean @default(true)
+  maintenanceMode  Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
